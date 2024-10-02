@@ -49,10 +49,21 @@ else:
     if st.button("Get Response"):
         if incident_description and selected_moods:
             response = get_gemini_text_response(incident_description, selected_moods)
+            response_text = []
+
+            # Collect response text
             for chunk in response:
-                st.write(chunk.text)
+                try:
+                    response_text.append(chunk.text)
+                except AttributeError:
+                    st.error("Received an unexpected response format from the AI.")
+                    break
+            
+            if response_text:
+                full_response = "\n".join(response_text)
+                st.write(full_response)
                 st.session_state['chat_history'].append(("You", incident_description))
-                st.session_state['chat_history'].append(("Bot", chunk.text))
+                st.session_state['chat_history'].append(("Bot", full_response))
         else:
             st.error("Please fill in both the incident description and select at least one mood.")
 
