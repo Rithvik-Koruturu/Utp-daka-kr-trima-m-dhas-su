@@ -3,6 +3,7 @@ import os
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+from io import BytesIO
 
 # Load environment variables (like your Google API key)
 load_dotenv()
@@ -18,8 +19,12 @@ else:
     # Function to get the response from the generative AI model for images
     def get_image_analysis(image_data):
         model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content([image_data, "Analyze the educational content in this image."])
-        return response.text
+        try:
+            response = model.generate_content([image_data, "Analyze the educational content in this image."])
+            return response.text
+        except Exception as e:
+            st.error(f"Error in image analysis: {e}")
+            return "Analysis failed."
 
     # Function to get a response for text input using the gemini-pro model
     def get_text_response(question, image_context=None):
@@ -52,8 +57,12 @@ else:
             image = Image.open(uploaded_file)
             st.image(image, caption=f"Uploaded Image: {uploaded_file.name}", use_column_width=True)
 
+            # Convert the image to a binary format for analysis
+            image_data = BytesIO()
+            image.save(image_data, format='PNG')  # Save as PNG or JPEG based on the file
+            image_data.seek(0)  # Move to the beginning of the BytesIO buffer
+
             # Analyze the image and get context
-            image_data = uploaded_file.getvalue()
             image_context = get_image_analysis(image_data)
             image_contexts.append(image_context)
 
