@@ -5,3 +5,4 @@ PyPDF2
 python-dotenv
 googletrans
 pyttsx3
+deep-translator
