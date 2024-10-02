@@ -73,4 +73,4 @@ else:
         st.write(f"{role}: {text}")
 
     # Additional sidebar functionalities
-    st.sidebar.markdown("© 2024 Team NeuroNova")
+    st.sidebar.markdown("© 2024 Utpādaka kr̥trima mēdhas'su")
