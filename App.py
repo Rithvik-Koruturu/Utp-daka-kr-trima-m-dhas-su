@@ -30,7 +30,7 @@ else:
 
     # Initialize Streamlit app
     st.set_page_config(page_title="Tranquilia- Emotional AI Assistant")
-    st.header("NeuroNova - Emotional AI Assistant")
+    st.header("Tranqulia- Emotional AI Assistant")
 
     # Initialize session state for chat history if it doesn't exist
     if 'chat_history' not in st.session_state:
