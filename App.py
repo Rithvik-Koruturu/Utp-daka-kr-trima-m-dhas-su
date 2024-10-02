@@ -1,95 +1,73 @@
-from dotenv import load_dotenv
-import os
 import streamlit as st
-import google.generativeai as genai
+from googletrans import Translator  # For language translation
+import pyttsx3  # For text-to-speech functionality
 from PIL import Image
-import io
 
-# Load environment variables (like your Google API key)
-load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
+# Initialize the translator and TTS engine
+translator = Translator()
+tts_engine = pyttsx3.init()
 
-# Check if the API key is set; if not, display an error message
-if not api_key:
-    st.error("API key is not set. Please check your .env file.")
-else:
-    # Configure the generative AI model with the provided API key
-    genai.configure(api_key=api_key)
+# Title of the application
+st.title("Course Creation Copilot")
 
-    # Function to get the response from the generative AI model for images
-    def get_image_analysis(image):
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        try:
-            response = model.generate_content([image, "Analyze the educational content in this image."])
-            return response.text
-        except Exception as e:
-            st.error(f"Error in image analysis: {e}")
-            return "Analysis failed."
+# Step 1: Course Structure Design
+st.header("1. Design Course Structure")
+course_title = st.text_input("Course Title:")
+num_modules = st.number_input("Number of Modules:", min_value=1, value=1)
 
-    # Function to get a response for text input using the gemini-pro model
-    def get_text_response(question, image_context=None):
-        model = genai.GenerativeModel("gemini-pro")
-        chat = model.start_chat(history=[])
+modules = []
+for i in range(num_modules):
+    module_name = st.text_input(f"Module {i + 1} Name:")
+    modules.append(module_name)
 
-        if image_context:
-            combined_prompt = f"Context: {image_context}\nQuestion: {question}"
-            response = chat.send_message(combined_prompt, stream=True)
-        else:
-            response = chat.send_message(question, stream=True)
+# Step 2: Language Translation Copilot
+st.header("2. Translate Course Content")
+content_to_translate = st.text_area("Enter content to translate:")
+selected_language = st.selectbox("Select Language:", ["Hindi", "Tamil", "Bengali", "Kannada"])
 
-        return response
+if st.button("Translate"):
+    # Translate content
+    translated = translator.translate(content_to_translate, dest=selected_language.lower())
+    st.write("Translated Content:")
+    st.write(translated.text)
 
-    # Initialize Streamlit app
-    st.set_page_config(page_title="AI-Powered Learning Companion")
+# Step 3: Multimedia Enhancements
+st.header("3. Add Multimedia Enhancements")
 
-    st.header("AI-Powered Learning Companion")
+# Image Copilot
+st.subheader("Image Copilot")
+uploaded_image = st.file_uploader("Upload an image for your course (optional):", type=["jpg", "jpeg", "png"])
+if uploaded_image:
+    image = Image.open(uploaded_image)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    # Initialize session state for chat history
-    if 'chat_history' not in st.session_state:
-        st.session_state['chat_history'] = []
+# Animation Copilot (Placeholder)
+st.subheader("Animation Copilot")
+st.write("Suggest animations based on your course topic (Placeholder).")
 
-    # Multi-image upload functionality
-    uploaded_files = st.file_uploader("Upload educational images...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-    image_contexts = []
-    
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            image = Image.open(uploaded_file)
-            st.image(image, caption=f"Uploaded Image: {uploaded_file.name}", use_column_width=True)
+# Voiceover Copilot
+st.subheader("Voiceover Copilot")
+voiceover_text = st.text_area("Enter text for voiceover:")
+if st.button("Generate Voiceover"):
+    tts_engine.save_to_file(voiceover_text, 'voiceover.mp3')  # Save as MP3
+    tts_engine.runAndWait()
+    st.write("Voiceover generated! Check your project directory for the file.")
 
-            # Analyze the image and get context
-            image_context = get_image_analysis(image)
-            image_contexts.append(image_context)
+# Step 4: Lecture Notes Creation
+st.header("4. Generate Lecture Notes")
+lecture_notes_content = st.text_area("Enter content for lecture notes:")
+if st.button("Generate Notes"):
+    st.write("Lecture Notes:")
+    st.write(lecture_notes_content)
 
-        # Display the analysis results for each image
-        st.subheader("Image Analysis Results:")
-        for idx, context in enumerate(image_contexts):
-            st.write(f"Analysis for Image {idx + 1}: {context}")
+# Final Step: Save Course Structure
+if st.button("Save Course Structure"):
+    st.write("Course Title:", course_title)
+    st.write("Modules:", modules)
+    st.success("Course structure saved successfully!")
 
-    # Unified input field for text queries
-    user_input = st.text_input("Ask a question (related to the images or any educational topic):")
-
-    # Button to get a response
-    if st.button("Get Response"):
-        if user_input:
-            combined_image_context = "\n".join(image_contexts) if image_contexts else None
-            response = get_text_response(user_input, combined_image_context)
-            
-            # Display response
-            for chunk in response:
-                st.write(chunk.text)
-                st.session_state['chat_history'].append(("You", user_input))
-                st.session_state['chat_history'].append(("Bot", chunk.text))
-
-    # Display chat history
-    st.subheader("Chat History")
-    for role, text in st.session_state['chat_history']:
-        st.write(f"{role}: {text}")
-
-    # Future Opportunities Section
-    st.markdown("### Future Opportunities:")
-    st.markdown("- Enhanced multi-modal learning: Incorporating video, audio, and other forms of media.")
-    st.markdown("- Adaptive learning: Personalized learning paths based on user performance.")
-    st.markdown("- Gamification: Game-based mechanics to enhance engagement.")
-    st.markdown("- Cross-platform integration: Mobile apps and educational platforms.")
-    st.markdown("- Subject-specific expansions: Specialized AI capabilities for fields like medicine, law, or engineering.")
+st.markdown("---")
+st.markdown("### Future Enhancements:")
+st.markdown("- Integrate a database to save and manage courses.")
+st.markdown("- Add options for creating quizzes and assessments.")
+st.markdown("- Provide analytics on course engagement and effectiveness.")
