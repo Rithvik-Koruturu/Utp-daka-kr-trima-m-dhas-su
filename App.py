@@ -1,54 +1,65 @@
+from dotenv import load_dotenv
+import os
 import streamlit as st
-from deep_translator import GoogleTranslator  # Import the translator
-from PIL import Image
+import google.generativeai as genai
 
-# Title of the application
-st.title("Course Creation Copilot")
+# Load environment variables (like your Google API key)
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
 
-# Step 1: Course Structure Design
-st.header("1. Design Course Structure")
-course_title = st.text_input("Course Title:")
-num_modules = st.number_input("Number of Modules:", min_value=1, value=1)
+# Check if the API key is set; if not, display an error message
+if not api_key:
+    st.error("API key is not set. Please check your .env file.")
+else:
+    # Configure the generative AI model with the provided API key
+    genai.configure(api_key=api_key)
 
-modules = []
-for i in range(num_modules):
-    module_name = st.text_input(f"Module {i + 1} Name:")
-    modules.append(module_name)
+    # Function to get a response for text input using the gemini-pro model
+    def get_gemini_text_response(description, moods):
+        model = genai.GenerativeModel("gemini-pro")
+        chat = model.start_chat(history=[])
 
-# Step 2: Language Translation Copilot
-st.header("2. Translate Course Content")
-content_to_translate = st.text_area("Enter content to translate:")
-selected_language = st.selectbox("Select Language:", ["hi", "ta", "bn", "kn"], format_func=lambda x: {
-    "hi": "Hindi",
-    "ta": "Tamil",
-    "bn": "Bengali",
-    "kn": "Kannada"
-}[x])
+        # Emotional context for the model
+        emotional_prompt = f"User is feeling {' and '.join(moods)}. "
+        prompt = f"{emotional_prompt}Incident Description: {description}"
 
-if st.button("Translate"):
-    # Translate content using deep_translator
-    translated = GoogleTranslator(source='auto', target=selected_language).translate(content_to_translate)
-    st.write("Translated Content:")
-    st.write(translated)
+        # Get response from the AI
+        response = chat.send_message(prompt, stream=True)
+        
+        return response
 
-# Step 3: Multimedia Enhancements
-st.header("3. Add Multimedia Enhancements")
+    # Initialize Streamlit app
+    st.set_page_config(page_title="NeuroNova - Emotional AI Assistant")
+    st.header("NeuroNova - Emotional AI Assistant")
 
-# Image Copilot
-st.subheader("Image Copilot")
-uploaded_image = st.file_uploader("Upload an image for your course (optional):", type=["jpg", "jpeg", "png"])
-if uploaded_image:
-    image = Image.open(uploaded_image)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    # Initialize session state for chat history if it doesn't exist
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = []
 
-# Final Step: Save Course Structure
-if st.button("Save Course Structure"):
-    st.write("Course Title:", course_title)
-    st.write("Modules:", modules)
-    st.success("Course structure saved successfully!")
+    # Mood Selection using checkboxes
+    st.subheader("Select Your Moods")
+    mood_options = ["😊 Happy", "😟 Sad", "😠 Angry", "😰 Anxious", "😐 Neutral"]
+    selected_moods = st.multiselect("How are you feeling today?", mood_options)
 
-st.markdown("---")
-st.markdown("### Future Enhancements:")
-st.markdown("- Integrate a database to save and manage courses.")
-st.markdown("- Add options for creating quizzes and assessments.")
-st.markdown("- Provide analytics on course engagement and effectiveness.")
+    # Incident description input
+    st.subheader("Incident Description")
+    incident_description = st.text_area("Describe the incident or situation:")
+
+    # Button to get a response
+    if st.button("Get Response"):
+        if incident_description and selected_moods:
+            response = get_gemini_text_response(incident_description, selected_moods)
+            for chunk in response:
+                st.write(chunk.text)
+                st.session_state['chat_history'].append(("You", incident_description))
+                st.session_state['chat_history'].append(("Bot", chunk.text))
+        else:
+            st.error("Please fill in both the incident description and select at least one mood.")
+
+    # Display chat history
+    st.subheader("Chat History")
+    for role, text in st.session_state['chat_history']:
+        st.write(f"{role}: {text}")
+
+    # Additional sidebar functionalities
+    st.sidebar.markdown("© 2024 Team NeuroNova")
