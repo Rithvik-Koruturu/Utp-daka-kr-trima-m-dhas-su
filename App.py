@@ -1,11 +1,9 @@
 import streamlit as st
 from googletrans import Translator  # For language translation
-import pyttsx3  # For text-to-speech functionality
 from PIL import Image
 
-# Initialize the translator and TTS engine
+# Initialize the translator
 translator = Translator()
-tts_engine = pyttsx3.init()
 
 # Title of the application
 st.title("Course Creation Copilot")
@@ -40,25 +38,6 @@ uploaded_image = st.file_uploader("Upload an image for your course (optional):",
 if uploaded_image:
     image = Image.open(uploaded_image)
     st.image(image, caption="Uploaded Image", use_column_width=True)
-
-# Animation Copilot (Placeholder)
-st.subheader("Animation Copilot")
-st.write("Suggest animations based on your course topic (Placeholder).")
-
-# Voiceover Copilot
-st.subheader("Voiceover Copilot")
-voiceover_text = st.text_area("Enter text for voiceover:")
-if st.button("Generate Voiceover"):
-    tts_engine.save_to_file(voiceover_text, 'voiceover.mp3')  # Save as MP3
-    tts_engine.runAndWait()
-    st.write("Voiceover generated! Check your project directory for the file.")
-
-# Step 4: Lecture Notes Creation
-st.header("4. Generate Lecture Notes")
-lecture_notes_content = st.text_area("Enter content for lecture notes:")
-if st.button("Generate Notes"):
-    st.write("Lecture Notes:")
-    st.write(lecture_notes_content)
 
 # Final Step: Save Course Structure
 if st.button("Save Course Structure"):
