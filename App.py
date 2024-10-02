@@ -1,9 +1,6 @@
 import streamlit as st
-from googletrans import Translator  # For language translation
+from deep_translator import GoogleTranslator  # Import the translator
 from PIL import Image
-
-# Initialize the translator
-translator = Translator()
 
 # Title of the application
 st.title("Course Creation Copilot")
@@ -21,13 +18,18 @@ for i in range(num_modules):
 # Step 2: Language Translation Copilot
 st.header("2. Translate Course Content")
 content_to_translate = st.text_area("Enter content to translate:")
-selected_language = st.selectbox("Select Language:", ["Hindi", "Tamil", "Bengali", "Kannada"])
+selected_language = st.selectbox("Select Language:", ["hi", "ta", "bn", "kn"], format_func=lambda x: {
+    "hi": "Hindi",
+    "ta": "Tamil",
+    "bn": "Bengali",
+    "kn": "Kannada"
+}[x])
 
 if st.button("Translate"):
-    # Translate content
-    translated = translator.translate(content_to_translate, dest=selected_language.lower())
+    # Translate content using deep_translator
+    translated = GoogleTranslator(source='auto', target=selected_language).translate(content_to_translate)
     st.write("Translated Content:")
-    st.write(translated.text)
+    st.write(translated)
 
 # Step 3: Multimedia Enhancements
 st.header("3. Add Multimedia Enhancements")
